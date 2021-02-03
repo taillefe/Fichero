@@ -1,6 +1,7 @@
 package com.aulanosa.ficheros;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import android.content.res.Resources;
 import android.os.Bundle;
@@ -16,6 +17,9 @@ import android.widget.TextView;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -46,9 +50,9 @@ public class MainActivity extends AppCompatActivity {
 
         //txtMensaje.setVerticalScrollBarEnabled(true);
 
-            sd = Environment.getExternalStorageDirectory();
-            archivo1 = new File("fichero.txt");
-            archivo2 = new File(sd, "fichero2.txt");
+        //    sd = Environment.getExternalStorageDirectory();
+        //   archivo1 = new File("fichero.txt");
+         //   archivo2 = new File(sd, "fichero2.txt");
             mensaje = (TextView) findViewById(R.id.txtMensaje);
             contenidoLect = (EditText)
                     findViewById(R.id.edTxtMensajeLect);
@@ -133,9 +137,6 @@ public class MainActivity extends AppCompatActivity {
          }
 
 
-
-
-
         //Escribir en la memoria interna con acceso privado
         public void escribirMemInt() {
             try {
@@ -158,29 +159,83 @@ public class MainActivity extends AppCompatActivity {
 
                 // Lectura del fichero
                 String linea;
-                while((linea=in.readLine())!=null)
-                      contenidoLect.setText(linea);
+                String totalLineas ="";
+                while((linea=in.readLine())!=null){
+                    totalLineas = totalLineas + linea +"\n";
+                }
+                contenidoLect.setText(totalLineas);
                 in.close();
                 mensaje.setText("Archivo de acceso privado... lectura realizada");
             }catch (Exception e){
                 e.printStackTrace();
             }
         }
-  // escritura y lectura en un directorio en carpeta
+  // escritura y lectura en un directorio en memoria extera sd
+        public void EstadoSD(){
+        String cadena= "";
+
+         try{
+             // se comprueba el estado de la memoria externa (tarjeta sd)
+             String estado = Environment.getExternalStorageState();
+             if (estado.equals(Environment.MEDIA_MOUNTED)){
+                 sdDisponible = true;
+                 sdAccesoEscritura = true;
+
+             }else if (estado.equals(Environment.MEDIA_MOUNTED_READ_ONLY)){
+                 sdDisponible = true;
+                 sdAccesoEscritura = false;
+
+             }else {
+                 sdDisponible = false;
+                 sdAccesoEscritura = false;
+             }
+             cadena = "Disponibilidad SD " + sdDisponible + "Acceso Escritura " + sdAccesoEscritura;
+             mensaje.setText(cadena);
+         }catch(Exception e){
+                e.printStackTrace();
+         }
+        }
+
+   /* public void escribirMemExt() {
+       recurso = getResources();
+        mensaje.setText("Ruta : "+recurso);
+
+
+    }
+*/
         public void escribirMemExt(){
-        try{
-            File dir = new File(sd.getAbsolutePath() + "/dat");
-            dir.mkdirs();
-            File file = new File (dir, "fichero3.txt");
-        }catch (Exception e){
-            Log.e("FILE I/O", "Error en la escritura del fichero "+ e.getMessage());
-        }
+            EstadoSD();
+            File[] Memoria = ContextCompat.getExternalFilesDirs(getApplicationContext(), null);
+            File ruta = Memoria[1];
+            mensaje.setText("Ruta : "+ruta.toString());
+            File file = new File (ruta.getAbsolutePath(), "fichero2.txt");
+            try{
+               OutputStreamWriter outputStreamWriter = new OutputStreamWriter((new FileOutputStream(file)));
+               outputStreamWriter.write(contenidoEscr.getText().toString());
+               outputStreamWriter.close();
+            }catch (Exception e){
+                Log.e("FILE I/O", "Error en la escritura del fichero "+ e.getMessage());
+            }
+       }
 
-
-        }
         public void leerMemExt(){
+            EstadoSD();
+            File[] Memoria = ContextCompat.getExternalFilesDirs(getApplicationContext(), null);
+            File ruta = Memoria[1];
+            mensaje.setText("Ruta : "+ruta.toString());
+            File file = new File (ruta.getAbsolutePath(), "fichero2.txt");
+            try {
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+                String linea;
+                String totalLineas ="";
+                while((linea=bufferedReader.readLine())!=null){
+                    totalLineas = totalLineas + linea +"\n";
+                }
 
+                contenidoLect.setText(totalLineas);
+                bufferedReader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-
-
 }
